@@ -117,7 +117,7 @@ export async function POST(req) {
     response.cookies.set("token", token, {
       httpOnly: true,     // JS cannot read this cookie — prevents XSS
       secure: process.env.NODE_ENV === "production", // HTTPS only in prod
-      sameSite: "lax",    // Protects against CSRF
+      sameSite: "none",    // Protects against CSRF
       maxAge: 60 * 60 * 24 * 7, // 7 days in seconds
       path: "/",
     });
