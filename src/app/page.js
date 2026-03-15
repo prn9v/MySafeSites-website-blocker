@@ -33,7 +33,7 @@ const steps = [
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-background text-foreground font-sans">
+    <div className="min-h-screen bg-[#09090b] text-[#FAFAFA] font-sans">
       {/* Nav */}
       <nav className="border-b border-border/50 backdrop-blur-xl sticky top-0 z-50 bg-background/80">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
@@ -44,10 +44,10 @@ export default function LandingPage() {
             <span className="font-bold tracking-tighter text-lg">MySafeSites</span>
           </div>
           <div className="flex items-center gap-3">
-            <Link to="/login">
+            <Link href="/login">
               <Button variant="ghost">Log in</Button>
             </Link>
-            <Link to="/signup">
+            <Link href="/signup">
               <Button>Get Started</Button>
             </Link>
           </div>
@@ -72,8 +72,8 @@ export default function LandingPage() {
             MySafeSites keeps you productive and safe across all your devices.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link to="/signup">
-              <Button variant="hero" size="lg" className="gap-2">
+            <Link href="/signup">
+              <Button variant="hero" size="lg" className="gap-2 ">
                 Start for Free <ArrowRight size={16} />
               </Button>
             </Link>
@@ -146,7 +146,7 @@ export default function LandingPage() {
             <div className="relative">
               <h2 className="text-3xl font-bold tracking-tighter mb-4">Ready to take control?</h2>
               <p className="text-muted-foreground mb-8 max-w-md mx-auto">Join thousands of users who have reduced distractions by 47% with MySafeSites.</p>
-              <Link to="/signup">
+              <Link href="/signup">
                 <Button variant="hero" size="lg" className="gap-2">
                   Get Started Free <ArrowRight size={16} />
                 </Button>

@@ -1,0 +1,25 @@
+import swaggerJsdoc from "swagger-jsdoc";
+
+const options = {
+  definition: {
+    openapi: "3.0.0",
+    info: {
+      title: "Website Blocker API",
+      version: "1.0.0",
+      description: "API docs for Website Blocker auth routes",
+    },
+    components: {
+      securitySchemes: {
+        cookieAuth: {
+          type: "apiKey",
+          in: "cookie",
+          name: "token",
+        },
+      },
+    },
+  },
+  // Tell swagger-jsdoc where your route files are
+  apis: ["./src/app/api/**/*.js"],
+};
+
+export const swaggerSpec = swaggerJsdoc(options);
