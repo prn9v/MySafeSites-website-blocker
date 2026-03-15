@@ -106,6 +106,7 @@ import { verifyAuth } from "@/lib/auth";
 
 import BlockSite from "@/models/BlockSite";
 import User from "@/models/User";
+import Group from "@/models/Group"
 
 export async function GET(req) {
 
@@ -118,7 +119,11 @@ export async function GET(req) {
 
     const user = await User.findById(payload.userId).populate("group");
 
-    const adminId = user.group ? user.group.admin : user._id;
+    let adminId = user._id
+
+    if (user.group && user.group.admin) {
+      adminId = user.group.admin
+    }
 
     const sites = await BlockSite.find({
       user: adminId
