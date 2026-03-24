@@ -1,8 +1,59 @@
+/**
+ * @swagger
+ * /api/url-checker:
+ *   post:
+ *     summary: Analyze URL safety using AI
+ *     tags: [Security]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - url
+ *             properties:
+ *               url:
+ *                 type: string
+ *                 format: uri
+ *                 example: "https://www.instagram.com"
+ *                 description: "Full URL including protocol (https:// preferred)"
+ *     responses:
+ *       200:
+ *         description: Successful analysis
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 url:
+ *                   type: string
+ *                 score:
+ *                   type: number
+ *                 classification:
+ *                   type: string
+ *                   enum: [Low Risk, Potential Phishing, High Risk, Dangerous]
+ *                 risks:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       label:
+ *                         type: string
+ *                       severity:
+ *                         type: string
+ *                         enum: [safe, warning, high]
+ *       400:
+ *         description: Invalid request
+ *       500:
+ *         description: Analysis failed
+ */
+
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import https from "https";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
 // ── Helper: Get text from Gemini response ──────────────────────────────────
 function getResponseText(result) {
@@ -17,7 +68,8 @@ function extractJSON(text) {
   const clean = text.replace(/```json|```/g, "").trim();
   const start = clean.indexOf("{");
   const end = clean.lastIndexOf("}") + 1;
-  if (start === -1 || end === 0) throw new Error("No JSON found in AI response");
+  if (start === -1 || end === 0)
+    throw new Error("No JSON found in AI response");
   return JSON.parse(clean.slice(start, end).trim());
 }
 
@@ -26,7 +78,7 @@ function checkSSL(hostname) {
   return new Promise((resolve) => {
     const req = https.request(
       { hostname, port: 443, method: "HEAD", path: "/", timeout: 5000 },
-      () => resolve(true)
+      () => resolve(true),
     );
     req.on("error", () => resolve(false));
     req.on("timeout", () => {
@@ -45,10 +97,11 @@ export async function POST(req) {
     if (!url || typeof url !== "string") {
       return new Response(JSON.stringify({ error: "Missing url field." }), {
         status: 400,
+        headers: { "Content-Type": "application/json" },
       });
     }
 
-    const fullURL = /^https?:\/\//i.test(url) ? url : "https://" + url;
+    const fullURL = /^https?:\/\//i.test(url) ? url : `https://${url}`;
 
     let hostname;
     try {
@@ -56,6 +109,7 @@ export async function POST(req) {
     } catch {
       return new Response(JSON.stringify({ error: "Invalid URL format." }), {
         status: 400,
+        headers: { "Content-Type": "application/json" },
       });
     }
 
@@ -108,7 +162,7 @@ Rules:
 
       // Ensure SSL risk is always present
       const hasSSLRisk = parsed.risks.some((r) =>
-        r.label.toLowerCase().includes("ssl")
+        r.label.toLowerCase().includes("ssl"),
       );
 
       if (!hasSSLRisk) {
@@ -120,7 +174,37 @@ Rules:
         });
       }
 
-      // Return exact required structure
+      // ✅ Force EXACTLY 4 risks (Swagger contract)
+      parsed.risks = parsed.risks.slice(0, 4);
+      while (parsed.risks.length < 4) {
+        parsed.risks.push({
+          label: "No additional risk detected",
+          severity: "safe",
+        });
+      }
+
+      // ✅ Validate score
+      parsed.score = Number(parsed.score);
+      if (isNaN(parsed.score)) parsed.score = 50;
+      parsed.score = Math.max(0, Math.min(100, parsed.score));
+
+      // ✅ Validate classification
+      const validClasses = [
+        "Low Risk",
+        "Potential Phishing",
+        "High Risk",
+        "Dangerous",
+      ];
+
+      if (!validClasses.includes(parsed.classification)) {
+        if (parsed.score >= 80) parsed.classification = "Low Risk";
+        else if (parsed.score >= 60)
+          parsed.classification = "Potential Phishing";
+        else if (parsed.score >= 40) parsed.classification = "High Risk";
+        else parsed.classification = "Dangerous";
+      }
+
+      // ✅ Final response
       return new Response(
         JSON.stringify({
           url: parsed.url,
@@ -128,26 +212,33 @@ Rules:
           classification: parsed.classification,
           risks: parsed.risks,
         }),
-        { status: 200 }
+        {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        },
       );
-
     } catch (error) {
       return new Response(
         JSON.stringify({
           error: "Analysis failed",
-          details: error.message,
+          details: error.message, // ← matches the catch variable
         }),
-        { status: 500 }
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json" },
+        },
       );
     }
-
   } catch (error) {
     return new Response(
       JSON.stringify({
-        error: "Invalid request",
+        error: "Invalid request body",
         details: error.message,
       }),
-      { status: 400 }
+      {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      },
     );
   }
 }
