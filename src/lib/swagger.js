@@ -19,7 +19,11 @@ const options = {
     },
   },
   // Tell swagger-jsdoc where your route files are
-  apis: ["./src/app/api/**/*.js"],
+  apis: [
+    process.env.NODE_ENV === "production"
+      ? path.join(process.cwd(), ".next/server/app/api/**/*.js")
+      : path.join(process.cwd(), "src/app/api/**/*.js"),
+  ],
 };
 
 export const swaggerSpec = swaggerJsdoc(options);
