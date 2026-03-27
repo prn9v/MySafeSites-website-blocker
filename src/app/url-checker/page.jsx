@@ -21,7 +21,7 @@ export default function SafetyCheckerPage() {
     setError(null);
 
     try {
-      const res = await fetch(`${getBackendUrl()}/api/url-checker`, {
+      const res = await fetch(`${getBackendUrl()}/url-checker`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url: trimmed }),
