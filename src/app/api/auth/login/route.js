@@ -12,7 +12,6 @@ if (!JWT_SECRET) {
   throw new Error('Missing environment variable: "JWT_SECRET"');
 }
 
-
 /**
  * @swagger
  * /api/auth/login:
@@ -51,7 +50,7 @@ export async function POST(req) {
     if (!email || !password) {
       return NextResponse.json(
         { error: "Email and password are required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -59,7 +58,7 @@ export async function POST(req) {
     if (!emailRegex.test(email)) {
       return NextResponse.json(
         { error: "Invalid email format" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -67,14 +66,14 @@ export async function POST(req) {
     await connectDB();
 
     const user = await User.findOne({ email: email.toLowerCase() }).select(
-      "+password"
+      "+password",
     );
 
     if (!user) {
       // Same message as wrong password — don't leak which one is wrong
       return NextResponse.json(
         { error: "Invalid credentials" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -84,7 +83,7 @@ export async function POST(req) {
     if (!isValid) {
       return NextResponse.json(
         { error: "Invalid credentials" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -96,7 +95,7 @@ export async function POST(req) {
         role: user.role,
       },
       JWT_SECRET,
-      { expiresIn: JWT_EXPIRES_IN }
+      { expiresIn: JWT_EXPIRES_IN },
     );
 
     // ── 5. Set httpOnly cookie + return safe user data ──
@@ -111,14 +110,14 @@ export async function POST(req) {
           group: user.group,
         },
       },
-      { status: 200 }
+      { status: 200 },
     );
 
     response.cookies.set("token", token, {
-      httpOnly: true,     // JS cannot read this cookie — prevents XSS
-      secure: process.env.NODE_ENV === "production", // HTTPS only in prod
-      sameSite: "none",    // Protects against CSRF
-      maxAge: 60 * 60 * 24 * 7, // 7 days in seconds
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      maxAge: 60 * 60 * 24 * 7,
       path: "/",
     });
 
@@ -127,7 +126,7 @@ export async function POST(req) {
     console.error("Login error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

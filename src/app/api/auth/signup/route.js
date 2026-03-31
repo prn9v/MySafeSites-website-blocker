@@ -47,14 +47,14 @@ export async function POST(req) {
     if (!name || !email || !password) {
       return NextResponse.json(
         { error: "Name, email and password are required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (name.trim().length < 2) {
       return NextResponse.json(
         { error: "Name must be at least 2 characters" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -62,14 +62,14 @@ export async function POST(req) {
     if (!emailRegex.test(email)) {
       return NextResponse.json(
         { error: "Invalid email format" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (password.length < 8) {
       return NextResponse.json(
         { error: "Password must be at least 8 characters" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -80,7 +80,7 @@ export async function POST(req) {
     if (existing) {
       return NextResponse.json(
         { error: "An account with this email already exists" },
-        { status: 409 } // 409 Conflict
+        { status: 409 }, // 409 Conflict
       );
     }
 
@@ -93,6 +93,7 @@ export async function POST(req) {
       name: name.trim(),
       email: email.toLowerCase(),
       password: hashedPassword,
+      provider: "credentials",
       role: "member",
     });
 
@@ -104,7 +105,7 @@ export async function POST(req) {
         role: user.role,
       },
       JWT_SECRET,
-      { expiresIn: "7d" }
+      { expiresIn: "7d" },
     );
 
     // ── 6. Set httpOnly cookie + return safe user data ──
@@ -119,14 +120,14 @@ export async function POST(req) {
           group: user.group,
         },
       },
-      { status: 201 }
+      { status: 201 },
     );
 
     response.cookies.set("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 7, // 7 days
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      maxAge: 60 * 60 * 24 * 7,
       path: "/",
     });
 
@@ -135,7 +136,7 @@ export async function POST(req) {
     console.error("Signup error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

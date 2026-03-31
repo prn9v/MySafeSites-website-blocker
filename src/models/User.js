@@ -9,7 +9,7 @@ const UserSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
- 
+
     email: {
       type: String,
       required: true,
@@ -21,7 +21,9 @@ const UserSchema = new mongoose.Schema(
 
     password: {
       type: String,
-      required: true,
+      required: function () {
+        return this.provider === "credentials";
+      },
       select: false,
     },
 
@@ -36,8 +38,17 @@ const UserSchema = new mongoose.Schema(
       enum: ["admin", "member"],
       default: "member",
     },
+
+    provider: {
+      type: String,
+      enum: ["credentials", "google", "github"],
+      default: "credentials",
+    },
+
+    providerId: String,
+    image: String,
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export default mongoose.models.User || mongoose.model("User", UserSchema);
